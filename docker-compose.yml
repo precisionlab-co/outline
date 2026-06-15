@@ -1,7 +1,7 @@
 name: ${COMPOSE_PROJECT_NAME:-papps-outline}
 
 services:
-  dev-outline-redis:
+  redis:
     profiles:
       - dev
     image: redis:7-alpine
@@ -9,7 +9,7 @@ services:
       - "${REDIS_PORT_BIND:-127.0.0.1:16379}:6379"
     user: "redis:redis"
 
-  dev-outline-postgres:
+  postgres:
     profiles:
       - dev
     image: postgres:16-alpine

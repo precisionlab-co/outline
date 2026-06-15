@@ -28,7 +28,7 @@ help:
 		"watch         Run tests in watch mode"
 
 dev-up:
-	$(COMPOSE_DEV) up -d dev-outline-postgres dev-outline-redis
+	$(COMPOSE_DEV) up -d postgres redis
 
 check-yarn:
 	@command -v yarn >/dev/null 2>&1 || { \
