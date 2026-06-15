@@ -10,9 +10,14 @@ const envDefault = fs.existsSync(envPath)
   : {};
 
 // Load environment specific variables, in reverse order of precedence
-const environments = ["production", "development", "local", "test"];
+const environmentFiles = {
+  production: [".env.production"],
+  development: [".env.dev"],
+  local: [".env.local"],
+  test: [".env.test"],
+};
 
-for (const env of environments) {
+for (const [env, fileNames] of Object.entries(environmentFiles)) {
   const isEnv = process.env.NODE_ENV === env || envDefault.NODE_ENV === env;
   const isLocalDevelopment =
     env === "local" &&
@@ -20,12 +25,14 @@ for (const env of environments) {
       envDefault.NODE_ENV === "development");
 
   if (isEnv || isLocalDevelopment) {
-    const resolvedPath = path.resolve(process.cwd(), `.env.${env}`);
-    if (fs.existsSync(resolvedPath)) {
-      environment = {
-        ...environment,
-        ...dotenv.parse(fs.readFileSync(resolvedPath, "utf8")),
-      };
+    for (const fileName of fileNames) {
+      const resolvedPath = path.resolve(process.cwd(), fileName);
+      if (fs.existsSync(resolvedPath)) {
+        environment = {
+          ...environment,
+          ...dotenv.parse(fs.readFileSync(resolvedPath, "utf8")),
+        };
+      }
     }
   }
 }
