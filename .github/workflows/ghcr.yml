@@ -1,0 +1,82 @@
+name: Publish GHCR image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: precisionlab-co/outline
+  BASE_IMAGE_NAME: precisionlab-co/outline-base
+
+jobs:
+  publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker base metadata
+        id: base-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BASE_IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-,format=long
+
+      - name: Build and push base image
+        id: build-base
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.base
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.base-meta.outputs.tags }}
+          labels: ${{ steps.base-meta.outputs.labels }}
+
+      - name: Docker image metadata
+        id: image-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-,format=long
+
+      - name: Build and push image
+        id: build-image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.BASE_IMAGE_NAME }}@${{ steps.build-base.outputs.digest }}
+          tags: ${{ steps.image-meta.outputs.tags }}
+          labels: ${{ steps.image-meta.outputs.labels }}
+
+      - name: Print immutable image reference
+        run: |
+          echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build-image.outputs.digest }}"

@@ -24,13 +24,7 @@ services:
   outline:
     profiles:
       - prod
-    image: ${OUTLINE_IMAGE:-papps-outline:prod}
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        BASE_IMAGE: ${OUTLINE_BASE_IMAGE:-papps-outline-base:prod}
-        CDN_URL: ${CDN_URL:-}
+    image: ${OUTLINE_IMAGE:-ghcr.io/precisionlab-co/outline@sha256:0000000000000000000000000000000000000000000000000000000000000000}
     container_name: ${OUTLINE_CONTAINER_NAME:-papps-outline-app}
     restart: unless-stopped
     depends_on:
@@ -145,16 +139,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  outline-base:
-    profiles:
-      - build
-    image: ${OUTLINE_BASE_IMAGE:-papps-outline-base:prod}
-    build:
-      context: .
-      dockerfile: Dockerfile.base
-      args:
-        CDN_URL: ${CDN_URL:-}
 
 networks:
   edge_proxy:
